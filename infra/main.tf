@@ -35,3 +35,57 @@ resource "google_project_iam_member" "backend_firestore" {
   role    = "roles/datastore.user"
   member  = "serviceAccount:${google_service_account.backend.email}"
 }
+
+# Servicio de Cloud Run que ejecuta la imagen Docker del backend.
+resource "google_cloud_run_v2_service" "backend" {
+  name                = "${var.prefijo}-backend"
+  location            = var.region
+
+  # Permite eliminar el servicio mediante terraform destroy.
+  deletion_protection = false
+
+  # El servicio se crea después de habilitar las APIs requeridas.
+  depends_on = [google_project_service.apis]
+
+  template {
+
+    # Identidad utilizada por el backend para acceder a servicios de Google Cloud.
+    # Sepodria de forma predeterminada pero se hace porque el que creamos si tiene permisos para firestore
+    service_account = google_service_account.backend.email
+
+    containers {
+
+      # Imagen Docker del backend almacenada en Artifact Registry.
+      image = var.imagen_backend
+
+      env {
+
+        # Nombre de la variable que utiliza la aplicación para identificar Firestore.
+        name = "BASE_DATOS"
+
+        # Obtiene automáticamente el nombre de la base Firestore creada por Terraform.
+        value = google_firestore_database.db.name
+      }
+    }
+
+    scaling {
+
+      # Limita el servicio a un máximo de tres instancias.
+      max_instance_count = 3
+    }
+  }
+}
+
+# Permite que el backend pueda ser invocado públicamente por Internet.
+resource "google_cloud_run_v2_service_iam_member" "backend_publico" {
+
+  # Aplica el permiso al servicio Cloud Run creado anteriormente.
+  name     = google_cloud_run_v2_service.backend.name
+  location = google_cloud_run_v2_service.backend.location
+
+  # Permiso requerido para invocar un servicio de Cloud Run.
+  role = "roles/run.invoker"
+
+  # Permite el acceso a cualquier usuario de Internet.
+  member = "allUsers"
+}

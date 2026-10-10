@@ -17,3 +17,8 @@ variable "region" {
   type    = string
   default = "us-central1"
 }
+
+variable "imagen_backend" {
+  type        = string
+  description = "Ruta completa de la imagen del backend, con etiqueta"
+}
