@@ -27,3 +27,8 @@ variable "imagen_frontend" {
   type        = string
   description = "Ruta completa de la imagen del frontend, con etiqueta"
 }
+
+variable "origen_permitido" {
+  type        = string
+  description = "Origen permitido para las solicitudes CORS al backend"
+}

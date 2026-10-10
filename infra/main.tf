@@ -62,6 +62,11 @@ resource "google_cloud_run_v2_service" "backend" {
         # Obtiene automáticamente el nombre de la base Firestore creada por Terraform.
         value = google_firestore_database.db.name
       }
+
+      env {
+        name  = "ORIGEN_PERMITIDO"
+        value = var.origen_permitido
+      }
     }
 
     scaling {
