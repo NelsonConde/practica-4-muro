@@ -40,36 +40,31 @@ resource "google_project_iam_member" "backend_firestore" {
 resource "google_cloud_run_v2_service" "backend" {
   name                = "${var.prefijo}-backend"
   location            = var.region
-
   # Permite eliminar el servicio mediante terraform destroy.
   deletion_protection = false
-
   # El servicio se crea después de habilitar las APIs requeridas.
   depends_on = [google_project_service.apis]
 
   template {
-
     # Identidad utilizada por el backend para acceder a servicios de Google Cloud.
     # Sepodria de forma predeterminada pero se hace porque el que creamos si tiene permisos para firestore
     service_account = google_service_account.backend.email
 
-    containers {
+    max_instance_request_concurrency = 5
 
+    containers {
       # Imagen Docker del backend almacenada en Artifact Registry.
       image = var.imagen_backend
 
       env {
-
         # Nombre de la variable que utiliza la aplicación para identificar Firestore.
         name = "BASE_DATOS"
-
         # Obtiene automáticamente el nombre de la base Firestore creada por Terraform.
         value = google_firestore_database.db.name
       }
     }
 
     scaling {
-
       # Limita el servicio a un máximo de tres instancias.
       max_instance_count = 3
     }
