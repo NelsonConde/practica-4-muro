@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muro</title>
+<style>
+  :root {
+    --fondo: #f4f1ee;
+    --tarjeta: #ffffff;
+    --texto: #1d1d1f;
+    --suave: #6e6e73;
+    --acento: #c8102e;
+    --borde: #e5e0db;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+  }
+  header {
+    background: var(--acento);
+    color: #fff;
+    padding: 1.4rem 1rem 3.2rem;
+  }
+  header .marco, main { max-width: 560px; margin: 0 auto; }
+  h1 { margin: 0; font-size: 1.7rem; letter-spacing: -.02em; }
+  header p { margin: .3rem 0 0; opacity: .85; font-size: .95rem; }
+  main { padding: 0 1rem 2rem; margin-top: -2.2rem; }
+  .nuevo {
+    background: var(--tarjeta);
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,.08);
+  }
+  input, textarea {
+    width: 100%;
+    font: inherit;
+    padding: .7rem .8rem;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    background: #fbfaf9;
+    margin-bottom: .6rem;
+  }
+  textarea { min-height: 4.5rem; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--acento); border-color: transparent; }
+  button {
+    width: 100%;
+    font: inherit;
+    font-weight: 600;
+    padding: .75rem;
+    border: 0;
+    border-radius: 10px;
+    background: var(--acento);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:disabled { opacity: .6; cursor: default; }
+  #estado { display: block; margin: 1rem .2rem .6rem; color: var(--suave); font-size: .85rem; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li {
+    display: flex;
+    gap: .75rem;
+    background: var(--tarjeta);
+    border-radius: 14px;
+    padding: .8rem .9rem;
+    margin-bottom: .6rem;
+    border: 1px solid var(--borde);
+  }
+  .inicial {
+    flex: 0 0 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #fff;
+  }
+  .autor { font-weight: 650; margin-bottom: .15rem; }
+  .cuerpo { line-height: 1.4; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header>
+  <div class="marco">
+    <h1>Muro</h1>
+    <p>Escribe algo. Lo verá cualquiera que abra esta página.</p>
+  </div>
+</header>
+<main>
+  <div class="nuevo">
+    <input id="autor" placeholder="Tu nombre" maxlength="40">
+    <textarea id="texto" placeholder="Escribe un mensaje" maxlength="280"></textarea>
+    <button id="enviar">Publicar</button>
+  </div>
+  <small id="estado">Cargando...</small>
+  <ul id="lista"></ul>
+</main>
+<script>
+const API = "__BACKEND_URL__";
+const COLORES = ["#c8102e", "#1f6feb", "#2e7d32", "#8e44ad", "#d35400", "#00838f"];
+
+function colorDe(nombre) {
+  let suma = 0;
+  for (const letra of nombre) suma += letra.codePointAt(0);
+  return COLORES[suma % COLORES.length];
+}
+
+async function cargar() {
+  try {
+    const respuesta = await fetch(API + "/mensajes");
+    const datos = await respuesta.json();
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+    for (const m of datos.mensajes) {
+      const li = document.createElement("li");
+      const inicial = document.createElement("div");
+      inicial.className = "inicial";
+      inicial.textContent = (m.autor[0] || "?").toUpperCase();
+      inicial.style.background = colorDe(m.autor);
+      const contenido = document.createElement("div");
+      const autor = document.createElement("div");
+      autor.className = "autor";
+      autor.textContent = m.autor;
+      const cuerpo = document.createElement("div");
+      cuerpo.className = "cuerpo";
+      cuerpo.textContent = m.texto;
+      contenido.append(autor, cuerpo);
+      li.append(inicial, contenido);
+      lista.append(li);
+    }
+    document.getElementById("estado").textContent = "Respondió la instancia " + datos.instancia;
+  } catch (error) {
+    document.getElementById("estado").textContent = "No se pudo hablar con el backend: " + error;
+  }
+}
+
+document.getElementById("enviar").onclick = async () => {
+  const boton = document.getElementById("enviar");
+  const autor = document.getElementById("autor").value.trim();
+  const texto = document.getElementById("texto").value.trim();
+  if (!autor || !texto) return;
+  boton.disabled = true;
+  try {
+    await fetch(API + "/mensajes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ autor, texto })
+    });
+    document.getElementById("texto").value = "";
+    await cargar();
+  } finally {
+    boton.disabled = false;
+  }
+};
+
+cargar();
+setInterval(cargar, 5000);
+</script>
+</body>
+</html>
