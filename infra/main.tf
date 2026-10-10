@@ -50,6 +50,8 @@ resource "google_cloud_run_v2_service" "backend" {
     # Sepodria de forma predeterminada pero se hace porque el que creamos si tiene permisos para firestore
     service_account = google_service_account.backend.email
 
+    max_instance_request_concurrency = 80
+
     containers {
       # Imagen Docker del backend almacenada en Artifact Registry.
       image = var.imagen_backend
