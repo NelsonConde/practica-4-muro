@@ -22,3 +22,8 @@ variable "imagen_backend" {
   type        = string
   description = "Ruta completa de la imagen del backend, con etiqueta"
 }
+
+variable "imagen_frontend" {
+  type        = string
+  description = "Ruta completa de la imagen del frontend, con etiqueta"
+}
