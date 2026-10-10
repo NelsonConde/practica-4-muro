@@ -1,4 +1,4 @@
-# API del muro de mensajes: listar y publicar, guardando en Firestore.
+# API del muro de mensajes: listar y publicar, guardando en Firestore. -- Modificado
 import os, uuid
 from flask import Flask, request, jsonify
 from google.cloud import firestore
